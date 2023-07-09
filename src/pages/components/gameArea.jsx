@@ -98,9 +98,7 @@ export const GameArea = () => {
         setSelectedNumber(null);
         setGameStatus("processing");
         setCellStatus(id, "shown");
-        setTimeout(() => {
-          setGameStatus("idle");
-        }, SHOW_CELL_DURATION);
+        setGameStatus("idle");
       } else {
         setSelectedNumber(null);
         setGameStatus("processing");
