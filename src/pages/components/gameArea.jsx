@@ -4,9 +4,9 @@ import { Cell } from "./Cell";
 
 const SHOW_CELL_DURATION = 500;
 
-export const GameArea = () => {
+export const GameArea = ({ addMoveCount, startTimer }) => {
   const [numbers, setNumbers] = useState([]);
-  const [gameStatus, setGameStatus] = useState("idle");
+  const [gameStatus, setGameStatus] = useState("start");
   const [selectedNumber, setSelectedNumber] = useState();
 
   useEffect(() => {
@@ -41,25 +41,36 @@ export const GameArea = () => {
     numbers.sort(() => Math.random() - 0.5);
     setNumbers(numbers);
   }
+
+  const isCellHidden = (index) => {
+    return numbers[index].status === "hidden";
+  };
+
   function onCellClick(id) {
-    if (gameStatus !== "idle") return;
-    setNumbers((prevState) => {
-      const mutatedNumbers = prevState.map((cell) => {
-        if (cell.id === id) {
-          !selectedNumber && setSelectedNumber(cell);
-          return {
-            ...cell,
-            status: "shown",
-          };
-        }
-        return cell;
+    gameStatus === "start" && startTimer();
+    setGameStatus("processing");
+    if (gameStatus === "processing") return;
+    const clickedCellIndex = numbers.findIndex((num) => num.id === id);
+    if (isCellHidden(clickedCellIndex)) {
+      setNumbers((prevState) => {
+        const mutatedNumbers = prevState.map((cell) => {
+          if (cell.id === id) {
+            addMoveCount();
+            !selectedNumber && setSelectedNumber(cell);
+            return {
+              ...cell,
+              status: "shown",
+            };
+          }
+          return cell;
+        });
+        return mutatedNumbers;
       });
-      return mutatedNumbers;
-    });
-    if (selectedNumber) {
+    }
+
+    if (selectedNumber && id !== selectedNumber.id) {
       if (selectedNumber.value === numbers.find((num) => num.id === id).value) {
         setSelectedNumber(null);
-        setGameStatus("processing");
 
         setNumbers((prevState) => {
           const mutatedNumbers = prevState.map((cell) => {
@@ -71,12 +82,10 @@ export const GameArea = () => {
             }
             return cell;
           });
-          setGameStatus("idle");
           return mutatedNumbers;
         });
       } else {
         setSelectedNumber(null);
-        setGameStatus("processing");
         setTimeout(() => {
           setNumbers((prevState) => {
             const mutatedNumbers = prevState.map((cell) => {
@@ -90,10 +99,10 @@ export const GameArea = () => {
             });
             return mutatedNumbers;
           });
-          setGameStatus("idle");
         }, SHOW_CELL_DURATION);
       }
     }
+    setGameStatus("idle");
   }
 
   return (
