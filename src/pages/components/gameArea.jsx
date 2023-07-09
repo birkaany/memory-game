@@ -2,8 +2,12 @@ import React, { useEffect, useState } from "react";
 
 import { Cell } from "./Cell";
 
+const SHOW_CELL_DURATION = 500;
+
 export const GameArea = () => {
   const [numbers, setNumbers] = useState([]);
+  const [gameStatus, setGameStatus] = useState("idle");
+  const [selectedNumber, setSelectedNumber] = useState();
 
   useEffect(() => {
     createRandomNumbers();
@@ -37,11 +41,12 @@ export const GameArea = () => {
     numbers.sort(() => Math.random() - 0.5);
     setNumbers(numbers);
   }
-
   function onCellClick(id) {
+    if (gameStatus !== "idle") return;
     setNumbers((prevState) => {
       const mutatedNumbers = prevState.map((cell) => {
         if (cell.id === id) {
+          !selectedNumber && setSelectedNumber(cell);
           return {
             ...cell,
             status: "shown",
@@ -51,6 +56,44 @@ export const GameArea = () => {
       });
       return mutatedNumbers;
     });
+    if (selectedNumber) {
+      if (selectedNumber.value === numbers.find((num) => num.id === id).value) {
+        setSelectedNumber(null);
+        setGameStatus("processing");
+
+        setNumbers((prevState) => {
+          const mutatedNumbers = prevState.map((cell) => {
+            if (cell.id === id) {
+              return {
+                ...cell,
+                status: "shown",
+              };
+            }
+            return cell;
+          });
+          setGameStatus("idle");
+          return mutatedNumbers;
+        });
+      } else {
+        setSelectedNumber(null);
+        setGameStatus("processing");
+        setTimeout(() => {
+          setNumbers((prevState) => {
+            const mutatedNumbers = prevState.map((cell) => {
+              if (selectedNumber.id === cell.id || id === cell.id) {
+                return {
+                  ...cell,
+                  status: "hidden",
+                };
+              }
+              return cell;
+            });
+            return mutatedNumbers;
+          });
+          setGameStatus("idle");
+        }, SHOW_CELL_DURATION);
+      }
+    }
   }
 
   return (
